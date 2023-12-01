@@ -46,6 +46,7 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)              # tee=True displays the log of the solver
 
     print('Termination condition: ', SolverResults.solver.termination_condition)
+    print('logging.DEBUG ')
     if SolverResults.solver.termination_condition == TerminationCondition.infeasible:
         log_infeasible_constraints(OptModel, log_expression=True, log_variables=True)
         logging.basicConfig(filename=_path+'/openTEPES_infeasibilities_'+CaseName+'.txt', level=logging.DEBUG)
