@@ -14,6 +14,7 @@ from   pyomo.environ import DataPortal, Set, Param, Var, Binary, NonNegativeReal
 def InputData(DirName, CaseName, mTEPES, pIndLogConsole):
     print('Input data                             ****')
     print('Cloned Version 25/11/2023              ****')
+    print('logging.DEBUG  01/12/2023              ****')
 
     _path = os.path.join(DirName, CaseName)
     StartTime = time.time()
