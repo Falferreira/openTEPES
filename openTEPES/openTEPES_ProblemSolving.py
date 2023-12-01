@@ -48,7 +48,8 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     print('Termination condition: ', SolverResults.solver.termination_condition)
     if SolverResults.solver.termination_condition == TerminationCondition.infeasible:
         log_infeasible_constraints(OptModel, log_expression=True, log_variables=True)
-        logging.basicConfig(filename=_path+'/openTEPES_infeasibilities_'+CaseName+'.txt', level=logging.INFO)
+        logging.basicConfig(filename=_path+'/openTEPES_infeasibilities_'+CaseName+'.txt', level=logging.DEBUG)
+#        logging.basicConfig(filename=_path+'/openTEPES_infeasibilities_'+CaseName+'.txt', level=logging.INFO)
     assert (SolverResults.solver.termination_condition == TerminationCondition.optimal or SolverResults.solver.termination_condition == TerminationCondition.maxTimeLimit or SolverResults.solver.termination_condition == TerminationCondition.infeasible.maxIterations), 'Problem infeasible'
     SolverResults.write()                                                              # summary of the solver results
 
