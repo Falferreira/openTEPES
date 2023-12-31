@@ -15,11 +15,13 @@ AC          Alternating Current
 aFRR        Automatic Frequency Restoration Reserve
 AWE         Alkaline Water Electrolyzer
 BESS        Battery Energy Storage System
+CC          Capacity Credit
 CCGT        Combined Cycle Gas Turbine
 DC          Direct Current
 DCPF        DC Power Flow
 DR          Demand Response
 DSM         Demand-Side Management
+DSR         Demand-Side Response
 EFOR        Equivalent Forced Outage Rate
 ENS         Energy Not Served
 ENTSO-E     European Network of Transmission System Operators for Electricity
@@ -33,8 +35,9 @@ OCGT        Open Cycle Gas Turbine
 PHS         Pumped-Hydro Storage
 PNS         Power Not Served
 PV          Photovoltaics
-RR          Replacement Reserve
+RES         Renewable Energy Source
 TTC         Total Transfer Capacity
+VOLL        Value of Lost Load
 VRE         Variable Renewable Energy
 VRES        Variable Renewable Energy Source
 ==========  ====================================================================
@@ -85,13 +88,13 @@ File                                       Description
 ``oT_Data_Period.csv``                     Weight of each period
 ``oT_Data_Scenario.csv``                   Short-term uncertainties
 ``oT_Data_Stage.csv``                      Weight of each stage
-``oT_Data_ReserveMargin.csv``              Minimum adequacy reserve margin
+``oT_Data_ReserveMargin.csv``              Minimum adequacy reserve margin for each area and period
 ``oT_Data_Emission.csv``                   Maximum CO2 emission
 ``oT_Data_Duration.csv``                   Duration of the load levels
 ``oT_Data_Demand.csv``                     Electricity demand
 ``oT_Data_Inertia.csv``                    System inertia by area
-``oT_Data_OperatingReserveUp.csv``         Upward   operating reserves (include aFRR, mFRR and RR for electricity balancing from ENTSO-E)
-``oT_Data_OperatingReserveDown.csv``       Downward operating reserves (include aFRR, mFRR and RR for electricity balancing from ENTSO-E)
+``oT_Data_OperatingReserveUp.csv``         Upward   operating reserves (include aFRR and mFRR for electricity balancing from ENTSO-E)
+``oT_Data_OperatingReserveDown.csv``       Downward operating reserves (include aFRR and mFRR for electricity balancing from ENTSO-E)
 ``oT_Data_Generation.csv``                 Generation data
 ``oT_Data_VariableMaxGeneration.csv``      Variable maximum power generation  by load level
 ``oT_Data_VariableMinGeneration.csv``      Variable minimum power generation  by load level
@@ -290,7 +293,7 @@ Period      Scenario        Load level  Area    Upward/downward operating reserv
 ==========  ==============  ==========  ======  ===================================================================  ==
 
 Given that the operating reserves depend on the area, it can be sensible to assign an area as a country, for example.
-These operating reserves must include Automatic Frequency Restoration Reserves (aFRR), Manual Frequency Restoration Reserves (mFRR) and Replacement Reserves (RR) for electricity balancing from ENTSO-E.
+These operating reserves must include Automatic Frequency Restoration Reserves (aFRR) and Manual Frequency Restoration Reserves (mFRR) for electricity balancing from ENTSO-E.
 
 Internally, all the values below 2.5e-5 times the maximum system demand of each area will be converted into 0 by the model.
 
@@ -324,7 +327,7 @@ MinimumStorage        Minimum energy that can be stored by the ESS unit         
 Efficiency            Round-trip efficiency of the pump/turbine cycle of a pumped-hydro storage power plant or charge/discharge of a battery            p.u.
 ProductionFunction    Production function from water inflows to energy (only used for hydropower plants modeled with water units and basin topology)    kWh/m\ :sup:`3`
 ProductionFunctionH2  Production function from energy to hydrogen (only used for electrolyzers)                                                         kWh/kgH2
-Availability          Unit availability for system adequacy reserve margin                                                                              p.u.
+Availability          Unit availability for area adequacy reserve margin (also called de-rating factor or capacity credit)                              p.u.
 Inertia               Unit inertia constant                                                                                                             s
 EFOR                  Equivalent Forced Outage Rate                                                                                                     p.u.
 RampUp                Ramp up   rate for generating units or maximum discharge rate for ESS discharge                                                   MW/h
@@ -340,8 +343,8 @@ OperReserveCost       Operating reserve cost                                    
 StartUpCost           Startup  cost                                                                                                                     M€
 ShutDownCost          Shutdown cost                                                                                                                     M€
 CO2EmissionRate       CO2 emission rate. It can be negative for units absorbing CO2 emissions as biomass                                                tCO2/MWh
-FixedInvestmentCost   Overnight investment (capital and fixed O&M) cost                                                                                 M€
-FixedRetirementCost   Overnight retirement (capital and fixed O&M) cost                                                                                 M€
+FixedInvestmentCost   Overnight investment (capital -CAPEX- and fixed O&M -FOM-) cost                                                                   M€
+FixedRetirementCost   Overnight retirement (capital -CAPEX- and fixed O&M -FOM-) cost                                                                   M€
 FixedChargeRate       Fixed-charge rate to annualize the overnight investment cost                                                                      p.u.
 StorageInvestment     Storage capacity and energy inflows linked to the investment decision                                                             Yes/No
 BinaryInvestment      Binary unit investment decision                                                                                                   Yes/No
@@ -369,8 +372,6 @@ A generator with operation cost (sum of the fuel and emission cost, excluding O&
 it is considered a renewable unit. If its maximum storage is > 0, with or without operation cost, is considered an ESS.
 
 Must-run non-renewable units are always committed, i.e., their commitment decision is equal to 1. All must-run units are forced to produce at least their minimum output.
-
-If unit availability is left 0 or empty is changed to 1. For declaring a unit non contributing to system adequacy reserve margin, put the availability equal to a very small number.
 
 EFOR is used to reduce the maximum and minimum power of the unit. For hydropower plants it can be used to reduce their maximum power by the water head effect. It does not reduce the maximum charge.
 
@@ -430,6 +431,21 @@ All the generators must be defined as columns of these files.
 Internally, all the values below 1e-4 will be converted into 0 by the model.
 
 Fuel cost affects the linear and constant terms of the heat rate, expressed in Mcal/MWh and Mcal/h respectively.
+
+Variable emission cost
+----------------------
+
+A description of the data included in the file ``oT_Data_VariableEmissionCost.csv`` follows:
+
+==========  ==============  ==========  =========  =============================  ======
+Identifier  Identifier      Identifier  Header     Description
+==========  ==============  ==========  =========  =============================  ======
+Period      Scenario        Load level  Generator  Variable emission cost         €/tCO2
+==========  ==============  ==========  =========  =============================  ======
+
+All the generators must be defined as columns of these files.
+
+Internally, all the values below 1e-4 will be converted into 0 by the model.
 
 Energy inflows
 --------------
@@ -525,7 +541,7 @@ Converter            Converter station (not used in this version)               
 TTC                  Total transfer capacity (maximum permissible thermal load) in forward  direction. Static line rating             MW
 TTCBck               Total transfer capacity (maximum permissible thermal load) in backward direction. Static line rating             MW
 SecurityFactor       Security factor to consider approximately N-1 contingencies. NTC = TTC x SecurityFactor                          p.u.
-FixedInvestmentCost  Overnight investment (capital and fixed O&M) cost                                                                M€
+FixedInvestmentCost  Overnight investment (capital -CAPEX- and fixed O&M -FOM-) cost                                                  M€
 FixedChargeRate      Fixed-charge rate to annualize the overnight investment cost                                                     p.u.
 BinaryInvestment     Binary line/circuit investment decision                                                                          Yes/No
 InvestmentLo         Lower bound of investment decision                                                                               p.u.
@@ -634,7 +650,7 @@ InitialStorage        Initial volume stored at the first instant of the time sco
 MaximumStorage        Maximum volume that can be stored by the hydro reservoir                                                                hm\ :sup:`3`
 MinimumStorage        Minimum volume that can be stored by the hydro reservoir                                                                hm\ :sup:`3`
 BinaryInvestment      Binary reservoir investment decision                                                                                    Yes/No
-FixedInvestmentCost   Overnight investment (capital and fixed O&M) cost                                                                       M€
+FixedInvestmentCost   Overnight investment (capital -CAPEX- and fixed O&M -FOM-) cost                                                         M€
 FixedChargeRate       Fixed-charge rate to annualize the overnight investment cost                                                            p.u.
 InitialPeriod         Initial period (year) when the unit is installed or can be installed, if candidate                                      Year
 FinalPeriod           Final   period (year) when the unit is installed or can be installed, if candidate                                      Year
@@ -706,7 +722,7 @@ Length               Pipeline length (only used for reporting purposes). If not 
 TTC                  Total transfer capacity (maximum permissible thermal load) in forward  direction. Static pipeline rating             tH2
 TTCBck               Total transfer capacity (maximum permissible thermal load) in backward direction. Static pipeline rating             tH2
 SecurityFactor       Security factor to consider approximately N-1 contingencies. NTC = TTC x SecurityFactor                              p.u.
-FixedInvestmentCost  Overnight investment (capital and fixed O&M) cost                                                                    M€
+FixedInvestmentCost  Overnight investment (capital -CAPEX- and fixed O&M -FOM-) cost                                                      M€
 FixedChargeRate      Fixed-charge rate to annualize the overnight investment cost                                                         p.u.
 BinaryInvestment     Binary pipeline investment decision                                                                                  Yes/No
 InvestmentLo         Lower bound of investment decision                                                                                   p.u.

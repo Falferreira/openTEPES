@@ -1,5 +1,5 @@
 """
-Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - November 03, 2023
+Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - December 27, 2023
 """
 
 import time
@@ -18,7 +18,7 @@ def TotalObjectiveFunction(OptModel, mTEPES, pIndLogConsole):
     OptModel.eTotalSCost = Objective(rule=eTotalSCost, sense=minimize, doc='total system cost [MEUR]')
 
     def eTotalTCost(OptModel):
-        return OptModel.vTotalSCost == OptModel.vTotalICost + sum(mTEPES.pDiscountFactor[p] * mTEPES.pPeriodProb[p,sc] * (OptModel.vTotalGCost[p,sc,n] + OptModel.vTotalCCost[p,sc,n] + OptModel.vTotalECost[p,sc,n] + OptModel.vTotalRCost[p,sc,n]) for p,sc,n in mTEPES.psn)
+        return OptModel.vTotalSCost == OptModel.vTotalICost + sum(mTEPES.pDiscountedWeight[p] * mTEPES.pScenProb[p,sc] * (OptModel.vTotalGCost[p,sc,n] + OptModel.vTotalCCost[p,sc,n] + OptModel.vTotalECost[p,sc,n] + OptModel.vTotalRCost[p,sc,n]) for p,sc,n in mTEPES.psn)
     OptModel.eTotalTCost = Constraint(rule=eTotalTCost, doc='total system cost [MEUR]')
 
     GeneratingTime = time.time() - StartTime
@@ -33,7 +33,7 @@ def InvestmentModelFormulation(OptModel, mTEPES, pIndLogConsole):
 
     def eTotalICost(OptModel):
         if len(mTEPES.gc) + len(mTEPES.gd) + len(mTEPES.lc):
-            return OptModel.vTotalICost == sum(mTEPES.pDiscountFactor[p] * OptModel.vTotalFCost[p] for p in mTEPES.p)
+            return OptModel.vTotalICost == sum(mTEPES.pDiscountedWeight[p] * OptModel.vTotalFCost[p] for p in mTEPES.p)
         else:
             return Constraint.Skip
     OptModel.eTotalICost = Constraint(rule=eTotalICost, doc='system fixed    cost [MEUR]')
@@ -53,35 +53,35 @@ def InvestmentModelFormulation(OptModel, mTEPES, pIndLogConsole):
 
     def eConsecutiveGenInvest(OptModel,p,gc):
         if p != mTEPES.p.first():
-            return OptModel.vGenerationInvest[mTEPES.p.prev(p,1),gc      ] <= OptModel.vGenerationInvest[p,gc      ]
+            return OptModel.vGenerationInvest[mTEPES.p.prev(p,1),gc      ] + OptModel.vGenerationInvPer[p,gc      ] == OptModel.vGenerationInvest[p,gc      ]
         else:
             return Constraint.Skip
     OptModel.eConsecutiveGenInvest = Constraint(mTEPES.p, mTEPES.gc, rule=eConsecutiveGenInvest, doc='generation investment in consecutive periods')
 
     def eConsecutiveGenRetire(OptModel,p,gd):
         if p != mTEPES.p.first():
-            return OptModel.vGenerationRetire[mTEPES.p.prev(p,1),gd      ] <= OptModel.vGenerationRetire[p,gd      ]
+            return OptModel.vGenerationRetire[mTEPES.p.prev(p,1),gd      ] + OptModel.vGenerationRetPer[p,gd      ] == OptModel.vGenerationRetire[p,gd      ]
         else:
             return Constraint.Skip
     OptModel.eConsecutiveGenRetire = Constraint(mTEPES.p, mTEPES.gd, rule=eConsecutiveGenRetire, doc='generation retirement in consecutive periods')
 
     def eConsecutiveRsrInvest(OptModel,p,rc):
         if p != mTEPES.p.first():
-            return OptModel.vReservoirInvest[mTEPES.p.prev(p,1),rc      ] <= OptModel.vReservoirInvest[p,rc      ]
+            return OptModel.vReservoirInvest [mTEPES.p.prev(p,1),rc      ] + OptModel.vReservoirInvPer [p,rc      ] == OptModel.vReservoirInvest [p,rc      ]
         else:
             return Constraint.Skip
     OptModel.eConsecutiveRsrInvest = Constraint(mTEPES.p, mTEPES.rn, rule=eConsecutiveRsrInvest, doc='reservoir investment in consecutive periods')
 
     def eConsecutiveNetInvest(OptModel,p,ni,nf,cc):
         if p != mTEPES.p.first():
-            return OptModel.vNetworkInvest   [mTEPES.p.prev(p,1),ni,nf,cc] <= OptModel.vNetworkInvest   [p,ni,nf,cc]
+            return OptModel.vNetworkInvest   [mTEPES.p.prev(p,1),ni,nf,cc] + OptModel.vNetworkInvPer   [p,ni,nf,cc] == OptModel.vNetworkInvest   [p,ni,nf,cc]
         else:
             return Constraint.Skip
     OptModel.eConsecutiveNetInvest = Constraint(mTEPES.p, mTEPES.lc, rule=eConsecutiveNetInvest, doc='electric network investment in consecutive periods')
 
     def eConsecutiveNet2Invest(OptModel,p,ni,nf,cc):
         if p != mTEPES.p.first():
-            return OptModel.vPipelineInvest  [mTEPES.p.prev(p,1),ni,nf,cc] <= OptModel.vPipelineInvest  [p,ni,nf,cc]
+            return OptModel.vPipelineInvest  [mTEPES.p.prev(p,1),ni,nf,cc] + OptModel.vPipelineInvPer  [p,ni,nf,cc] == OptModel.vPipelineInvest  [p,ni,nf,cc]
         else:
             return Constraint.Skip
     OptModel.eConsecutiveNet2Invest = Constraint(mTEPES.p, mTEPES.pc, rule=eConsecutiveNet2Invest, doc='pipeline network investment in consecutive periods')
@@ -132,15 +132,15 @@ def GenerationOperationModelFormulationObjFunct(OptModel, mTEPES, pIndLogConsole
     setattr(OptModel, 'eTotalCCost_'+str(p)+'_'+str(sc)+'_'+str(st), Constraint(mTEPES.n, rule=eTotalCCost, doc='system variable consumption operation cost [MEUR]'))
 
     def eTotalECost(OptModel,n):
-        if (st,n) in mTEPES.s2n and sum(mTEPES.pEmissionCost[nr] for nr in mTEPES.nr):
+        if (st,n) in mTEPES.s2n and sum(mTEPES.pEmissionVarCost[p,sc,n,nr] for nr in mTEPES.nr):
             return OptModel.vTotalECost[p,sc,n] == sum(OptModel.vTotalECostArea[p,sc,n,ar] for ar in mTEPES.ar)
         else:
             return Constraint.Skip
     setattr(OptModel, 'eTotalECost_'+str(p)+'_'+str(sc)+'_'+str(st), Constraint(mTEPES.n, rule=eTotalECost, doc='system emission cost [MEUR]'))
 
     def eTotalECostArea(OptModel,n,ar):
-        if (st,n) in mTEPES.s2n and sum(mTEPES.pEmissionCost[nr] for nr in mTEPES.nr if (ar,nr) in mTEPES.a2g):
-            return OptModel.vTotalECostArea[p,sc,n,ar] == sum(mTEPES.pLoadLevelDuration[n] * mTEPES.pEmissionCost[nr] * OptModel.vTotalOutput[p,sc,n,nr] for nr in mTEPES.nr if (ar,nr) in mTEPES.a2g)
+        if (st,n) in mTEPES.s2n and sum(mTEPES.pEmissionVarCost[p,sc,n,nr] for nr in mTEPES.nr if (ar,nr) in mTEPES.a2g):
+            return OptModel.vTotalECostArea[p,sc,n,ar] == sum(mTEPES.pLoadLevelDuration[n] * mTEPES.pEmissionVarCost[p,sc,n,nr] * OptModel.vTotalOutput[p,sc,n,nr] for nr in mTEPES.nr if (ar,nr) in mTEPES.a2g)
         else:
             return Constraint.Skip
     setattr(OptModel, 'eTotalECostArea_'+str(p)+'_'+str(sc)+'_'+str(st), Constraint(mTEPES.n, mTEPES.ar, rule=eTotalECostArea, doc='area emission cost [MEUR]'))
@@ -223,10 +223,10 @@ def GenerationOperationModelFormulationInvestment(OptModel, mTEPES, pIndLogConso
         print('eUninstalGenCap       ... ', len(getattr(OptModel, 'eUninstalGenCap_'+str(p)+'_'+str(sc)+'_'+str(st))), ' rows')
 
     def eAdequacyReserveMargin(OptModel,p,ar):
-        if mTEPES.pReserveMargin[p,ar] and sum(1 for g in mTEPES.a2g):
-            return ((sum(                                       mTEPES.pRatedMaxPower[g ] * mTEPES.pAvailability[g ] / (1.0-mTEPES.pEFOR[g ]) for g  in mTEPES.g  if (ar,g ) in mTEPES.a2g and g not in (mTEPES.gc or mTEPES.gd)) +
-                     sum(   OptModel.vGenerationInvest[p,gc]  * mTEPES.pRatedMaxPower[gc] * mTEPES.pAvailability[gc] / (1.0-mTEPES.pEFOR[gc]) for gc in mTEPES.gc if (ar,gc) in mTEPES.a2g                                      ) +
-                     sum((1-OptModel.vGenerationRetire[p,gd]) * mTEPES.pRatedMaxPower[gd] * mTEPES.pAvailability[gd] / (1.0-mTEPES.pEFOR[gd]) for gd in mTEPES.gd if (ar,gd) in mTEPES.a2g                                      ) ) >= mTEPES.pPeakDemand[ar] * mTEPES.pReserveMargin[p,ar])
+        if mTEPES.pReserveMargin[p,ar] and sum(1 for g in mTEPES.g if (ar,g) in mTEPES.a2g) and sum(mTEPES.pRatedMaxPower[g] * mTEPES.pAvailability[g]() / (1.0-mTEPES.pEFOR[g]) for g in mTEPES.g if (ar,g) in mTEPES.a2g and g not in (mTEPES.gc or mTEPES.gd)) <= mTEPES.pPeakDemand[p,ar] * mTEPES.pReserveMargin[p,ar]:
+            return ((sum(                                       mTEPES.pRatedMaxPower[g ] * mTEPES.pAvailability[g ]() / (1.0-mTEPES.pEFOR[g ]) for g  in mTEPES.g  if (ar,g ) in mTEPES.a2g and g not in (mTEPES.gc or mTEPES.gd)) +
+                     sum(   OptModel.vGenerationInvest[p,gc]  * mTEPES.pRatedMaxPower[gc] * mTEPES.pAvailability[gc]() / (1.0-mTEPES.pEFOR[gc]) for gc in mTEPES.gc if (ar,gc) in mTEPES.a2g                                      ) +
+                     sum((1-OptModel.vGenerationRetire[p,gd]) * mTEPES.pRatedMaxPower[gd] * mTEPES.pAvailability[gd]() / (1.0-mTEPES.pEFOR[gd]) for gd in mTEPES.gd if (ar,gd) in mTEPES.a2g                                      ) ) >= mTEPES.pPeakDemand[p,ar] * mTEPES.pReserveMargin[p,ar])
         else:
             return Constraint.Skip
     setattr(OptModel, 'eAdequacyReserveMargin_'+str(p)+'_'+str(sc)+'_'+str(st), Constraint(mTEPES.p, mTEPES.ar, rule=eAdequacyReserveMargin, doc='system adequacy reserve margin [p.u.]'))
@@ -235,7 +235,7 @@ def GenerationOperationModelFormulationInvestment(OptModel, mTEPES, pIndLogConso
         print('eAdequacyReserveMargin... ', len(getattr(OptModel, 'eAdequacyReserveMargin_'+str(p)+'_'+str(sc)+'_'+str(st))), ' rows')
 
     def eMaxSystemEmission(OptModel,p,ar):
-        if mTEPES.pEmission[p,ar] < math.inf and sum(mTEPES.pEmissionCost[nr] for nr in mTEPES.nr if (ar,nr) in mTEPES.a2g):
+        if mTEPES.pEmission[p,ar] < math.inf and sum(mTEPES.pEmissionVarCost[p,sc,n,nr] for n,nr in mTEPES.nn*mTEPES.nr if (st,n) in mTEPES.s2n and (ar,nr) in mTEPES.a2g):
             return sum(OptModel.vTotalECostArea[p,sc,n,ar]/mTEPES.pCO2Cost for n in mTEPES.nn if (st,n) in mTEPES.s2n) <= mTEPES.pEmission[p,ar]
         else:
             return Constraint.Skip

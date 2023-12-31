@@ -1,5 +1,5 @@
 """
-Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - October 26, 2023
+Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - December 20, 2023
 """
 
 import time
@@ -21,7 +21,7 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     Solver = SolverFactory(SolverName)                                                       # select solver
     if SolverName == 'gurobi':
         Solver.options['LogFile'       ] = _path+'/openTEPES_gurobi_'+CaseName+'.log'
-        # Solver.options['IISFile'     ] = _path+'/openTEPES_gurobi_'+CaseName+'.ilp'               # should be uncommented to show results of IIS
+        # Solver.options['IISFile'     ] = _path+'/openTEPES_gurobi_'+CaseName+'.ilp'        # should be uncommented to show results of IIS
         Solver.options['Method'        ] = 2                                                 # barrier method
         Solver.options['MIPFocus'      ] = 3
         Solver.options['Presolve'      ] = 2
@@ -33,6 +33,15 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
         Solver.options['Threads'       ] = int((psutil.cpu_count(logical=True) + psutil.cpu_count(logical=False))/2)
         Solver.options['TimeLimit'     ] =    36000
         Solver.options['IterationLimit'] = 36000000
+    if SolverName == 'gams':
+        solver_options = {
+            'file COPT / cplex.opt / ; put COPT putclose "LPMethod 4" / "RINSHeur 100" / ; GAMS_MODEL.OptFile = 1 ;'
+            'option LP      = cplex    ;',
+            'option MIP     = cplex    ;',
+            'option Threads = '+str(int((psutil.cpu_count(logical=True) + psutil.cpu_count(logical=False))/2))+' ;',
+            'option ResLim  =    36000 ;',
+            'option IterLim = 36000000 ;'
+        }
 
     if (mTEPES.pIndBinGenInvest()*len(mTEPES.gc)*sum(mTEPES.pIndBinUnitInvest[gc] for gc in mTEPES.gc) + mTEPES.pIndBinGenRetire()*len(mTEPES.gd)*sum(mTEPES.pIndBinUnitRetire[gd] for gd in mTEPES.gd) + mTEPES.pIndBinNetInvest ()*len(mTEPES.lc)*sum(mTEPES.pIndBinLineInvest[lc] for lc in mTEPES.lc) + mTEPES.pIndBinNetH2Invest()*len(mTEPES.pc)*sum(mTEPES.pIndBinPipeInvest[pc] for pc in mTEPES.pc) +
         mTEPES.pIndBinGenOperat()*len(mTEPES.nr)*sum(mTEPES.pIndBinUnitCommit[nr] for nr in mTEPES.nr) +                                                                                                  mTEPES.pIndBinLineCommit()*len(mTEPES.la)*sum(mTEPES.pIndBinLineSwitch[la] for la in mTEPES.la) + len(mTEPES.g2g) == 0 or
@@ -43,7 +52,10 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
             OptModel.dual = Suffix(direction=Suffix.IMPORT_EXPORT)
             OptModel.rc   = Suffix(direction=Suffix.IMPORT_EXPORT)
 
-    SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)              # tee=True displays the log of the solver
+    if SolverName == 'gurobi':
+        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)
+    if SolverName == 'gams'  :
+        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True, symbolic_solver_labels=True, add_options=solver_options)
 
     print('Termination condition: ', SolverResults.solver.termination_condition)
     print('logging.DEBUG ')
@@ -132,18 +144,18 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     print    ('  Problem size                         ... ', OptModel.model().nconstraints(), 'constraints, ', OptModel.model().nvariables()-mTEPES.nFixedVariables+1, 'variables')
     print    ('  Solution time                        ... ', round(SolvingTime), 's')
     print    ('  Total system                 cost [MEUR] ', OptModel.vTotalSCost())
-    print    ('  Total generation  investment cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pGenInvestCost [gc      ]   * OptModel.vGenerationInvest[p,gc      ]() for gc       in mTEPES.gc))
-    print    ('  Total generation  retirement cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pGenRetireCost [gd      ]   * OptModel.vGenerationRetire[p,gd      ]() for gd       in mTEPES.gd))
+    print    ('  Total generation  investment cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pGenInvestCost [gc      ]   * OptModel.vGenerationInvest[p,gc      ]() for gc       in mTEPES.gc))
+    print    ('  Total generation  retirement cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pGenRetireCost [gd      ]   * OptModel.vGenerationRetire[p,gd      ]() for gd       in mTEPES.gd))
     if mTEPES.pIndHydroTopology == 1 and len(mTEPES.rn):
-        print('  Total reservoir   investment cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pRsrInvestCost [rc      ]   * OptModel.vReservoirInvest [p,rc      ]() for rc       in mTEPES.rn))
+        print('  Total reservoir   investment cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pRsrInvestCost [rc      ]   * OptModel.vReservoirInvest [p,rc      ]() for rc       in mTEPES.rn))
     else:
         print('  Total reservoir   investment cost [MEUR] ', 0.0)
-    print    ('  Total network     investment cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pNetFixedCost  [ni,nf,cc]   * OptModel.vNetworkInvest   [p,ni,nf,cc]() for ni,nf,cc in mTEPES.lc))
+    print    ('  Total network     investment cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pNetFixedCost  [ni,nf,cc]   * OptModel.vNetworkInvest   [p,ni,nf,cc]() for ni,nf,cc in mTEPES.lc))
     if mTEPES.pIndHydrogen      == 1 and len(mTEPES.pc):
-        print('  Total pipeline    investment cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pLineInvestCost[ni,nf,cc]   * OptModel.vPipelineInvest  [p,ni,nf,cc]() for ni,nf,cc in mTEPES.pc))
+        print('  Total pipeline    investment cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pLineInvestCost[ni,nf,cc]   * OptModel.vPipelineInvest  [p,ni,nf,cc]() for ni,nf,cc in mTEPES.pc))
     else:
         print('  Total pipeline    investment cost [MEUR] ', 0.0)
-    print    ('  Total generation  operation  cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalGCost      [p,sc,n    ]() for n        in mTEPES.n ))
-    print    ('  Total consumption operation  cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalCCost      [p,sc,n    ]() for n        in mTEPES.n ))
-    print    ('  Total emission               cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalECost      [p,sc,n    ]() for n        in mTEPES.n ))
-    print    ('  Total reliability            cost [MEUR] ', sum(mTEPES.pDiscountFactor[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalRCost      [p,sc,n    ]() for n        in mTEPES.n ))
+    print    ('  Total generation  operation  cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalGCost      [p,sc,n    ]() for n        in mTEPES.n ))
+    print    ('  Total consumption operation  cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalCCost      [p,sc,n    ]() for n        in mTEPES.n ))
+    print    ('  Total emission               cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalECost      [p,sc,n    ]() for n        in mTEPES.n ))
+    print    ('  Total reliability            cost [MEUR] ', sum(mTEPES.pDiscountedWeight[p] * mTEPES.pScenProb      [p,sc    ]() * OptModel.vTotalRCost      [p,sc,n    ]() for n        in mTEPES.n ))

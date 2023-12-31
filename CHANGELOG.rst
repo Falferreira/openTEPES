@@ -1,6 +1,28 @@
 Change Log
 =============
 
+[4.15.0] - 2023-12-27
+----------------------
+- [CHANGED] introduce the variable emission cost file
+
+[4.14.12] - 2023-12-20
+----------------------
+- [CHANGED] allow the use of GAMS as a solver
+- [CHANGED] avoid formulation of adequacy constraints if already satisfied with existing capacity
+
+[4.14.11] - 2023-12-09
+----------------------
+- [FIXED] fix error associated to the period probability in the objective function
+- [FIXED] fix error in considering initial and final period for investment or retirement decisions
+
+[4.14.10] - 2023-12-01
+----------------------
+- [FIXED] change the name and delete some duplicated result output files
+
+[4.14.9] - 2023-11-24
+----------------------
+- [FIXED] values 0 of availability not changed to 1
+
 [4.14.8] - 2023-11-03
 ----------------------
 - [FIXED] declare StageWeight and LoadLevelWeight as NonNegativeReals

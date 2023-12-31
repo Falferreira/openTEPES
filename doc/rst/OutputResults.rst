@@ -29,10 +29,18 @@ Some maps of the electricity transmission network and the energy share of differ
    :scale: 6%
    :align: center
 
+.. image:: ../img/oT_Plot_TechnologyOutput_2030_sc01_9n.png
+   :scale: 20%
+   :align: center
+
+.. image:: ../img/oT_Plot_TechnologyOutput_2030_sc01_MAF.png
+   :scale: 55%
+   :align: center
+
 Some other additional plots are also plotted by the model. The CSV files used for outputting the results are briefly described in the following items.
 
-Investment
-----------
+Investment/Retirement
+---------------------
 
 File ``oT_Result_GenerationInvestment.csv``
 
@@ -106,7 +114,7 @@ Identifier    Identifier  Identifier  Header  Description
 Initial node  Final node  Circuit     MW-km   Electricity network investment
 ============  ==========  ==========  ======  ==============================
 
-File ``oT_Result_ReserveMargin.csv``
+File ``oT_Result_ReserveMarginPower.csv``
 
 ============  ============  ==========  ============================
 Identifier    Identifier    Header      Description
@@ -173,7 +181,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Generator   Downward operating reserve of each generator [MW]
 ============  ==========  ==========  ==========  =================================================
 
-File ``oT_Result_GenerationOutput.csv``
+File ``oT_Result_Generation.csv``
 
 ============  ==========  ==========  ==========  ===================================
 Identifier    Identifier  Identifier  Header      Description
@@ -261,7 +269,7 @@ Identifier    Identifier  Identifier  Header          Description
 Period        Scenario    Load level  Generator       Emission rate of the generators with power surplus, except the ESS [tCO2/MWh]
 ============  ==========  ==========  ==============  ===============================================================================================
 
-File ``oT_Result_TechnologyOutput.csv``
+File ``oT_Result_TechnologyGeneration.csv``
 
 ============  ==========  ==========  ==========  =================================
 Identifier    Identifier  Identifier  Header      Description
@@ -276,6 +284,22 @@ Identifier    Identifier  Identifier  Header      Description
 ============  ==========  ==========  ==========  =================================
 Period        Scenario    Load level  Technology  Consumption (charge in ESS) [MW]
 ============  ==========  ==========  ==========  =================================
+
+File ``oT_Result_TechnologyGenerationEnergy.csv``
+
+============  ==========  ==========  ==========  =================================
+Identifier    Identifier  Identifier  Header      Description
+============  ==========  ==========  ==========  =================================
+Period        Scenario    Load level  Technology  Energy (discharge in ESS) [GWh]
+============  ==========  ==========  ==========  =================================
+
+File ``oT_Result_TechnologyGenerationEnergy_AreaName.csv``
+
+============  ==========  ==========  ==========  ==========================================
+Identifier    Identifier  Identifier  Header      Description
+============  ==========  ==========  ==========  ==========================================
+Period        Scenario    Load level  Technology  Energy (discharge in ESS) per area [GWh]
+============  ==========  ==========  ==========  ==========================================
 
 File ``oT_Result_TechnologyCurtailmentEnergy.csv``
 
@@ -293,30 +317,6 @@ Identifier    Identifier  Identifier  Header          Description
 Period        Scenario    Load level  Technology      Percentage of energy curtailed of VRES [%]
 ============  ==========  ==========  ==============  ===========================================
 
-File ``oT_Result_TechnologyEnergy.csv``
-
-============  ==========  ==========  ==========  =================================
-Identifier    Identifier  Identifier  Header      Description
-============  ==========  ==========  ==========  =================================
-Period        Scenario    Load level  Technology  Energy (discharge in ESS) [GWh]
-============  ==========  ==========  ==========  =================================
-
-File ``oT_Result_TechnologyConsumptionEnergy.csv``
-
-============  ==========  ==========  ==========  =================================
-Identifier    Identifier  Identifier  Header      Description
-============  ==========  ==========  ==========  =================================
-Period        Scenario    Load level  Technology  Energy (charge in ESS) [GWh]
-============  ==========  ==========  ==========  =================================
-
-File ``oT_Result_TechnologyEnergy_AreaName.csv``
-
-============  ==========  ==========  ==========  ==========================================
-Identifier    Identifier  Identifier  Header      Description
-============  ==========  ==========  ==========  ==========================================
-Period        Scenario    Load level  Technology  Energy (discharge in ESS) per area [GWh]
-============  ==========  ==========  ==========  ==========================================
-
 File ``oT_Result_TechnologyEmission.csv``
 
 ============  ==========  ==========  ==========  =================================
@@ -333,7 +333,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology   CO2 emission per area [MtCO2]
 ============  ==========  ==========  ==========  =================================
 
-File ``oT_Result_TechnologyReserveUp.csv``
+File ``oT_Result_TechnologyOperatingReserveUp.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -341,7 +341,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology  Upward operating reserve [MW]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyReserveDown.csv``
+File ``oT_Result_TechnologyOperatingReserveDown.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -368,7 +368,7 @@ Period        Scenario    Load level  Technology  Spilled energy in ESS wrt the 
 ESS operation
 -------------
 
-File ``oT_Result_ConsumptionOutput.csv``
+File ``oT_Result_Consumption.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -416,7 +416,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Generator   Outflows energy in ESS [GWh]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyOutputESS.csv``
+File ``oT_Result_TechnologyConsumption.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -424,7 +424,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology  Charged power in ESS [MW]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyEnergyESS.csv``
+File ``oT_Result_TechnologyConsumptionEnergy.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -432,7 +432,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology  Energy (charge in ESS) [GWh]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyEnergyESS_AreaName.csv``
+File ``oT_Result_TechnologyConsumptionEnergy_AreaName.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -456,7 +456,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology  Energy (Outflows in ESS) [GWh]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyReserveUpESS.csv``
+File ``oT_Result_TechnologyOperatingReserveUpESS.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -464,7 +464,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Technology  Upward operating reserve [MW]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyReserveDownESS.csv``
+File ``oT_Result_TechnologyOperatingReserveDownESS.csv``
 
 ============  ==========  ==========  ==========  ==========================================
 Identifier    Identifier  Identifier  Header      Description
@@ -539,7 +539,7 @@ Identifier    Identifier  Identifier  Header      Description
 Period        Scenario    Load level  Reservoir   Spilled water in reservoir [hm\ :sup:`3`]
 ============  ==========  ==========  ==========  ==========================================
 
-File ``oT_Result_TechnologyReservoirSpillage.csv``
+File ``oT_Result_TechnologyOperatingReservoirSpillage.csv``
 
 ============  ==========  ==========  ==========  =========================================================
 Identifier    Identifier  Identifier  Header      Description

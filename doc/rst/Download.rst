@@ -2,15 +2,20 @@
 
 Download & Installation
 =======================
-The **openTEPES** has been developed using `Python 3.11.5 <https://www.python.org/>`_ and `Pyomo 6.6.2 <https://pyomo.readthedocs.io/en/stable/>`_ and it uses `Gurobi 10.0.3 <https://www.gurobi.com/products/gurobi-optimizer/>`_ as commercial MIP solver for which a free academic license is available.
-It uses Pyomo so that it is independent of the preferred solver. You can alternatively use one of the free solvers `HiGHS 1.5.3 <https://highs.dev/>`_, `SCIP 8.0.4 <https://www.scipopt.org/>`_, `GLPK 4.65 <https://www.gnu.org/software/glpk/>`_
+The **openTEPES** has been developed using `Python 3.11.5 <https://www.python.org/>`_ and `Pyomo 6.7.0 <https://pyomo.readthedocs.io/en/stable/>`_ and it uses `Gurobi 11.0.0 <https://www.gurobi.com/products/gurobi-optimizer/>`_ as commercial MIP solver for which a free academic license is available.
+It uses Pyomo so that it is independent of the preferred solver. You can alternatively use one of the free solvers `HiGHS 1.5.3 <https://ergo-code.github.io/HiGHS/dev/installation/>`_, `SCIP 8.1.0 <https://www.scipopt.org/>`_, `GLPK 4.65 <https://www.gnu.org/software/glpk/>`_
 and `CBC 2.10.11 <https://github.com/coin-or/Cbc>`_. List the serial solver interfaces under Pyomo with this call::
 
   pyomo help -s
 
-Gurobi solver is installed as a package::
+Gurobi, HiGHS, or SCIP  solvers can be installed as a package::
 
-  conda install -c gurobi gurobi
+  conda install -c gurobi      gurobi
+  pip   install                highspy
+  conda install -c conda-forge pyscipopt
+
+The model openTEPES can also be solved with `GAMS <https://www.gams.com/>`_ and a valid `GAMS license <https://www.gams.com/buy_gams/>`_ for a solver. The GAMS language is not included in the openTEPES package and must be installed separately.
+This option is activated by calling the openTEPES model with the solver name 'gams'.
 
 Besides, it also requires the following packages:
 
@@ -20,12 +25,12 @@ Besides, it also requires the following packages:
 
 Cases
 -----
-Here, you have the input files of a `small case study of 9 nodes <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/9n>`_, another one like a `small Spanish system <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/sSEP>`_ and a `modified RTS24 case study <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/RTS24>`_, and the `Reliability Test System Grid Modernization Lab Consortium (RTS-GMLC) <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/RTS24-GMLC>`_.
+Here, you have the input files of a `small case study of 9 nodes <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/9n>`_, another one like a `small Spanish system <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/sSEP>`_, a `modified RTS24 case study <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/RTS24>`_, and the `Reliability Test System Grid Modernization Lab Consortium (RTS-GMLC) <https://github.com/IIT-EnergySystemModels/openTEPES/tree/master/openTEPES/RTS24-GMLC>`_.
 
 Code
 ----
 
-The **openTEPES** code is provided under the `GNU General Public License <https://www.gnu.org/licenses/gpl-3.0.html>`_:
+The **openTEPES** code is provided under the `GNU Affero General Public License <https://www.gnu.org/licenses/agpl-3.0.en.html>`_:
 
 - the code can't become part of a closed-source commercial software product
 - any future changes and improvements to the code remain free and open
@@ -81,6 +86,11 @@ Mosek
 
 Another alternative is the `Mosek solver <https://www.mosek.com/>`_. Note that it is a commercial solver and you need a license for it. Mosek is a good alternative to deal with QPs, SOCPs, and SDPs problems. You only need to use ``conda install -c mosek mosek`` for installation and request a license (academic or commercial). To request the academic one, you can request `here <https://www.mosek.com/products/academic-licenses/>`_. Moreover, Mosek brings a `license guide <https://docs.mosek.com/9.2/licensing/index.html>`_. But if you are request an academic license, you will receive the license by email, and you only need to locate it in the following path ``C:\Users\(your user)\mosek`` in your computer.
 
+GAMS
+
+The model openTEPES can also be solved with `GAMS <https://www.gams.com/>`_ and a valid `GAMS license <https://www.gams.com/buy_gams/>`_ for a solver. The GAMS language is not included in the openTEPES package and must be installed separately.
+This option is activated by calling the openTEPES model with the solver name 'gams'.
+
 **Get started**
 
 Developers
@@ -90,7 +100,6 @@ By cloning the `openTEPES <https://github.com/IIT-EnergySystemModels/openTEPES/t
 Continue like the users for a simple way of executions.
 
 Users
-
 
 If you are not planning on developing, please follows the instructions of the `Installation <#installation>`_.
 

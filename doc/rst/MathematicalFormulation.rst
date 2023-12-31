@@ -67,7 +67,7 @@ They are written in **uppercase** letters.
 **Electricity demand**
 ------------------------  ----------------------------------------------------  -------
 :math:`D^p_{\omega ni}`   Electricity demand in each node                       GW
-:math:`PD_a`              Peak demand in each area                              GW
+:math:`PD_{pa}`           Peak demand in each area                              GW
 :math:`DUR_n`             Duration of each load level                           h
 :math:`CENS`              Cost of energy not served. Value of Lost Load (VoLL)  €/MWh
 ========================  ====================================================  =======
@@ -121,7 +121,7 @@ They are written in **uppercase** letters.
 :math:`\underline{GP}^p_{\omega ng}, \overline{GP}^p_{\omega ng}`  Minimum load and maximum output of a generator                                                                            GW
 :math:`\underline{GC}^p_{\omega ne}, \overline{GC}^p_{\omega ne}`  Minimum and maximum consumption of an ESS                                                                                 GW
 :math:`CF^p_{\omega ng}, CV^p_{\omega ng}`                         Fixed (no load) and variable cost of a generator. Variable cost includes fuel and O&M                                     €/h, €/MWh
-:math:`CE_g`                                                       Emission cost of a generator                                                                                              €/MWh
+:math:`CE^p_{\omega ng}`                                           Emission cost of a generator                                                                                              €/MWh
 :math:`ER_g`                                                       Emission rate of a generator                                                                                              tCO2/MWh
 :math:`CV_e`                                                       Variable cost of an ESS or pumped-storage hydro power plant when charging                                                 €/MWh
 :math:`RU_g, RD_g`                                                 Ramp up/down of a non-renewable unit or maximum discharge/charge rate for ESS discharge/charge                            MW/h
@@ -250,7 +250,7 @@ Generation operation cost [M€] «``eTotalGCost``»
 
 Generation emission cost [M€] «``eTotalECost``»
 
-:math:`\sum_{p \omega ng} {DF^p P^p_{\omega} DUR_n CE_g gp^p_{\omega ng}} +`
+:math:`\sum_{p \omega ng} {DF^p P^p_{\omega} DUR_n CE^p_{\omega ng} gp^p_{\omega ng}} +`
 
 Variable consumption operation cost [M€] «``eTotalCCost``»
 
@@ -300,7 +300,7 @@ Output and consumption bounded by investment decision for candidate ESS [p.u.] �
 
 Adequacy system reserve margin [p.u.] «``eAdequacyReserveMargin``»
 
-:math:`\sum_{g \in a, EG} \overline{GP}_g A_g + \sum_{g \in a, CG} icg^p_g \overline{GP}_g A_g \geq PD_a RM_{pa} \quad \forall pa`
+:math:`\sum_{g \in a, EG} \overline{GP}_g A_g + \sum_{g \in a, CG} icg^p_g \overline{GP}_g A_g \geq PD_{pa} RM_{pa} \quad \forall pa`
 
 Maximum CO2 emission [MtC02] «``eMaxSystemEmission``»
 

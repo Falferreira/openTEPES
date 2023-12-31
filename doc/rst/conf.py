@@ -12,7 +12,7 @@ copyright = '2023, Universidad Pontificia Comillas'
 author = 'Andres Ramos'
 
 # The short X.Y version
-version = 'version 4.14.7'
+version = 'version 4.15.0'
 # The full version, including alpha/beta/rc tags
 release = ''
 
@@ -27,7 +27,7 @@ release = ''
 # ones.
 extensions = [
     'sphinx.ext.todo',
-    'sphinx.ext.githubpages',
+    'sphinx.ext.githubpages'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,13 +84,13 @@ html_static_path = []
 #
 # html_sidebars = {}
 html_theme = 'alabaster'
-html_title = 'version 4.14.7'
+html_title = 'version 4.15.0'
 html_logo  = '../img/openTEPES.png'
 html_last_updated_fmt = ''
 html_show_sphinx = False
 html_theme_options = {
     'analytics_id': 'UA-515200-2',  #  Provided by Google in your dashboard
-    'description': 'version 4.14.7',
+    'description': 'version 4.15.0',
     'page_width': 'auto',
     'font_family': 'Georgia'
 }
