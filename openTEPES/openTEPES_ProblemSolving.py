@@ -1,5 +1,5 @@
 """
-Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - December 20, 2023
+Open Generation, Storage, and Transmission Operation and Expansion Planning Model with RES and ESS (openTEPES) - January 16, 2024
 """
 
 import time
@@ -23,9 +23,9 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
         Solver.options['LogFile'       ] = _path+'/openTEPES_gurobi_'+CaseName+'.log'
         # Solver.options['IISFile'     ] = _path+'/openTEPES_gurobi_'+CaseName+'.ilp'        # should be uncommented to show results of IIS
         Solver.options['Method'        ] = 2                                                 # barrier method
-        Solver.options['MIPFocus'      ] = 3
-        Solver.options['Presolve'      ] = 2
-        Solver.options['RINS'          ] = 100
+        # Solver.options['MIPFocus'      ] = 3
+        # Solver.options['Presolve'      ] = 2
+        # Solver.options['RINS'          ] = 100
         Solver.options['Crossover'     ] = -1
         # Solver.options['BarConvTol'    ] = 1e-9
         # Solver.options['BarQCPConvTol' ] = 0.025
@@ -36,26 +36,26 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     if SolverName == 'gams':
         solver_options = {
             'file COPT / cplex.opt / ; put COPT putclose "LPMethod 4" / "RINSHeur 100" / ; GAMS_MODEL.OptFile = 1 ;'
-            'option LP      = cplex    ;',
-            'option MIP     = cplex    ;',
-            'option Threads = '+str(int((psutil.cpu_count(logical=True) + psutil.cpu_count(logical=False))/2))+' ;',
-            'option ResLim  =    36000 ;',
-            'option IterLim = 36000000 ;'
+            'option SysOut  = off   ;',
+            'option LP      = cplex ; option MIP     = cplex    ;',
+            'option ResLim  = 36000 ; option IterLim = 36000000 ;',
+            'option Threads = '+str(int((psutil.cpu_count(logical=True) + psutil.cpu_count(logical=False))/2))+' ;'
         }
 
-    if (mTEPES.pIndBinGenInvest()*len(mTEPES.gc)*sum(mTEPES.pIndBinUnitInvest[gc] for gc in mTEPES.gc) + mTEPES.pIndBinGenRetire()*len(mTEPES.gd)*sum(mTEPES.pIndBinUnitRetire[gd] for gd in mTEPES.gd) + mTEPES.pIndBinNetInvest ()*len(mTEPES.lc)*sum(mTEPES.pIndBinLineInvest[lc] for lc in mTEPES.lc) + mTEPES.pIndBinNetH2Invest()*len(mTEPES.pc)*sum(mTEPES.pIndBinPipeInvest[pc] for pc in mTEPES.pc) +
-        mTEPES.pIndBinGenOperat()*len(mTEPES.nr)*sum(mTEPES.pIndBinUnitCommit[nr] for nr in mTEPES.nr) +                                                                                                  mTEPES.pIndBinLineCommit()*len(mTEPES.la)*sum(mTEPES.pIndBinLineSwitch[la] for la in mTEPES.la) + len(mTEPES.g2g) == 0 or
-        ((len(mTEPES.gc) == 0 or (len(mTEPES.gc) > 0 and mTEPES.pIndBinGenInvest() == 2)) and (len(mTEPES.gd) == 0 or (len(mTEPES.gd) > 0 and mTEPES.pIndBinGenRetire() == 2)) and (len(mTEPES.lc) == 0 or (len(mTEPES.lc) > 0 and mTEPES.pIndBinNetInvest () == 2)) and (len(mTEPES.pc) == 0 or (len(mTEPES.pc) > 0 and mTEPES.pIndBinNeH2tInvest() == 2)) and
-         (len(mTEPES.nr) == 0 or (len(mTEPES.nr) > 0 and mTEPES.pIndBinGenOperat() == 0)) and                                                                                      (len(mTEPES.la) == 0 or (len(mTEPES.la) > 0 and mTEPES.pIndBinLineCommit() == 0)))):
-        # there are no binary decisions (no investment/retirement decisions or investment/retirement decisions already ignored, no line switching/unit commitment, no mutually exclusive units)
-        if mTEPES.p.ord(p)*mTEPES.sc.ord(sc) == 1:
-            OptModel.dual = Suffix(direction=Suffix.IMPORT_EXPORT)
-            OptModel.rc   = Suffix(direction=Suffix.IMPORT_EXPORT)
+    idx = 0
+    for var in OptModel.component_data_objects(pyo.Var, active=True, descend_into=True):
+        if not var.is_continuous():
+            idx += 1
+    if idx == 0:
+        OptModel.dual = Suffix(direction=Suffix.IMPORT_EXPORT)
+        OptModel.rc   = Suffix(direction=Suffix.IMPORT_EXPORT)
 
-    if SolverName == 'gurobi':
+    if   SolverName == 'gurobi':
         SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)
-    if SolverName == 'gams'  :
-        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True, symbolic_solver_labels=True, add_options=solver_options)
+    elif SolverName == 'gams'  :
+        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True, symbolic_solver_labels=False, add_options=solver_options)
+    else:
+        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)
 
     print('Termination condition: ', SolverResults.solver.termination_condition)
     print('logging.DEBUG ')
@@ -68,66 +68,15 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
     #%% fix values of some variables to get duals and solve it again
     # binary/continuous investment decisions are fixed to their optimal values
     # binary            operation  decisions are fixed to their optimal values
-    if (mTEPES.pIndBinGenInvest()*len(mTEPES.gc)*sum(mTEPES.pIndBinUnitInvest[gc] for gc in mTEPES.gc) + mTEPES.pIndBinGenRetire()*len(mTEPES.gd)*sum(mTEPES.pIndBinUnitRetire[gd] for gd in mTEPES.gd) + mTEPES.pIndBinNetInvest ()*len(mTEPES.lc)*sum(mTEPES.pIndBinLineInvest[lc] for lc in mTEPES.lc) + mTEPES.pIndBinNetH2Invest()*len(mTEPES.pc)*sum(mTEPES.pIndBinPipeInvest[pc] for pc in mTEPES.pc) +
-        mTEPES.pIndBinGenOperat()*len(mTEPES.nr)*sum(mTEPES.pIndBinUnitCommit[nr] for nr in mTEPES.nr) +                                                                                                  mTEPES.pIndBinLineCommit()*len(mTEPES.la)*sum(mTEPES.pIndBinLineSwitch[la] for la in mTEPES.la) + len(mTEPES.g2g) > 0 and
-        ((len(mTEPES.gc) > 0 and mTEPES.pIndBinGenInvest() != 2) or (len(mTEPES.gd) > 0 and mTEPES.pIndBinGenRetire() != 2) or (len(mTEPES.lc) > 0 and mTEPES.pIndBinNetInvest () != 2) or (len(mTEPES.pc) > 0 and mTEPES.pIndBinNetH2Invest() != 2) or
-         (len(mTEPES.nr) > 0 and mTEPES.pIndBinGenOperat() == 0) or                                                            (len(mTEPES.la) > 0 and mTEPES.pIndBinLineCommit() == 0))):
-        if mTEPES.pIndBinGenInvest()*len(mTEPES.gc)*sum(mTEPES.pIndBinUnitInvest[gc] for gc in mTEPES.gc):
-            for gc in mTEPES.gc:
-                if mTEPES.pIndBinUnitInvest[gc] != 0:
-                    OptModel.vGenerationInvest[p,gc].fix(round(OptModel.vGenerationInvest[p,gc]()))
-                else:
-                    OptModel.vGenerationInvest[p,gc].fix(      OptModel.vGenerationInvest[p,gc]())
-        if mTEPES.pIndBinGenRetire()*len(mTEPES.gd)*sum(mTEPES.pIndBinUnitRetire[gd] for gd in mTEPES.gd):
-            for gd in mTEPES.gd:
-                if mTEPES.pIndBinUnitRetire[gd] != 0:
-                    OptModel.vGenerationRetire[p,gd].fix(round(OptModel.vGenerationRetire[p,gd]()))
-                else:
-                    OptModel.vGenerationRetire[p,gd].fix(      OptModel.vGenerationRetire[p,gd]())
-        if mTEPES.pIndHydroTopology == 1:
-            if mTEPES.pIndBinRsrInvest()*len(mTEPES.rn)*sum(mTEPES.pIndBinRsrvInvest[gc] for rc in mTEPES.rn):
-                for rc in mTEPES.rn:
-                    if mTEPES.pIndBinRsrvInvest[gc] != 0:
-                        OptModel.vReservoirInvest[p,rc].fix(round(OptModel.vReservoirInvest[p,rc]()))
-                    else:
-                        OptModel.vReservoirInvest[p,rc].fix(      OptModel.vReservoirInvest[p,rc]())
-        if mTEPES.pIndBinNetInvest()*len(mTEPES.lc)*sum(mTEPES.pIndBinLineInvest[lc] for lc in mTEPES.lc):
-            for ni,nf,cc in mTEPES.lc:
-                if mTEPES.pIndBinLineInvest[  ni,nf,cc] != 0:
-                    OptModel.vNetworkInvest[p,ni,nf,cc].fix(round(OptModel.vNetworkInvest[p,ni,nf,cc]()))
-                else:
-                    OptModel.vNetworkInvest[p,ni,nf,cc].fix(      OptModel.vNetworkInvest[p,ni,nf,cc]())
-        if mTEPES.pIndHydrogen == 1:
-            if mTEPES.pIndBinNetH2Invest()*len(mTEPES.pc)*sum(mTEPES.pIndBinPipeInvest[pc] for pc in mTEPES.pc):
-                for ni,nf,cc in mTEPES.pc:
-                    if mTEPES.pIndBinPipeInvest [  ni,nf,cc] != 0:
-                        OptModel.vPipelineInvest[p,ni,nf,cc].fix(round(OptModel.vPipelineInvest[p,ni,nf,cc]()))
-                    else:
-                        OptModel.vPipelineInvest[p,ni,nf,cc].fix(      OptModel.vPipelineInvest[p,ni,nf,cc]())
-        if mTEPES.pIndBinGenOperat()*len(mTEPES.nr)*sum(mTEPES.pIndBinUnitCommit[nr] for nr in mTEPES.nr):
-            for n,nr in mTEPES.n*mTEPES.nr:
-                if mTEPES.pIndBinUnitCommit[nr] != 0:
-                    OptModel.vCommitment[p,sc,n,nr].fix(round(OptModel.vCommitment[p,sc,n,nr]()))
-                    OptModel.vStartUp   [p,sc,n,nr].fix(round(OptModel.vStartUp   [p,sc,n,nr]()))
-                    OptModel.vShutDown  [p,sc,n,nr].fix(round(OptModel.vShutDown  [p,sc,n,nr]()))
-        if mTEPES.pIndBinLineCommit()*len(mTEPES.la)*sum(mTEPES.pIndBinLineSwitch[la] for la in mTEPES.la):
-            for n,ni,nf,cc in mTEPES.n*mTEPES.la:
-                if mTEPES.pIndBinLineSwitch[ni,nf,cc] != 0:
-                    OptModel.vLineCommit  [p,sc,n,ni,nf,cc].fix(round(OptModel.vLineCommit   [p,sc,n,ni,nf,cc]()))
-                    OptModel.vLineOnState [p,sc,n,ni,nf,cc].fix(round(OptModel.vLineOnState  [p,sc,n,ni,nf,cc]()))
-                    OptModel.vLineOffState[p,sc,n,ni,nf,cc].fix(round(OptModel.vLineOffState [p,sc,n,ni,nf,cc]()))
-                elif (ni,nf,cc) in mTEPES.lc:
-                    OptModel.vLineCommit  [p,sc,n,ni,nf,cc].fix(round(OptModel.vNetworkInvest[p,     ni,nf,cc]()))
-        if len(mTEPES.g2g):
-            for nr in mTEPES.nr:
-                if sum(1 for g in mTEPES.nr if (nr,g) in mTEPES.g2g or (g,nr) in mTEPES.g2g):
-                    OptModel.vMaxCommitment[nr].fix(round(OptModel.vMaxCommitment[nr]()))
-
-        if mTEPES.p.last() == mTEPES.pp.last() and mTEPES.sc.last() == mTEPES.scc.last() and mTEPES.st.last() == mTEPES.stt.last():
-            OptModel.dual = Suffix(direction=Suffix.IMPORT_EXPORT)
-            OptModel.rc   = Suffix(direction=Suffix.IMPORT_EXPORT)
-
-        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)              # tee=True displays the log of the solver
+    idx = 0
+    for var in OptModel.component_data_objects(pyo.Var, active=True, descend_into=True):
+        if not var.is_continuous():
+            var.fixed = True  # fix the current value
+            idx += 1
+    if idx > 0:
+        OptModel.dual = Suffix(direction=Suffix.IMPORT_EXPORT)
+        OptModel.rc   = Suffix(direction=Suffix.IMPORT_EXPORT)
+        SolverResults = Solver.solve(OptModel, tee=True, report_timing=True)
 
     # saving the dual variables for writing in output results
     pDuals = {}
@@ -135,6 +84,11 @@ def ProblemSolving(DirName, CaseName, SolverName, OptModel, mTEPES, pIndLogConso
         if c.is_indexed():
             for index in c:
                 pDuals[str(c.name)+str(index)] = OptModel.dual[c[index]]
+
+    # delete dual and rc suffixes if they exist
+    if idx > 0:
+        OptModel.del_component(OptModel.dual)
+        OptModel.del_component(OptModel.rc  )
 
     mTEPES.pDuals.update(pDuals)
 

@@ -1,6 +1,25 @@
 Change Log
 =============
 
+[4.15.4] - 2024-01-18
+----------------------
+- [FIXED] fix error when some scenarios have prob 0
+
+[4.15.3] - 2024-01-16
+----------------------
+- [CHANGED] move the computation of storage total energy inflows to reduce computation time
+- [CHANGED] avoid the use of last in computing duals
+
+[4.15.2] - 2024-01-15
+----------------------
+- [FIXED] allow solving just one period out of several defined
+- [CHANGED] split variable definition and bound assignment
+- [CHANGED] simplify the dual variables computation
+
+[4.15.1] - 2023-12-27
+----------------------
+- [CHANGED] avoid some future warnings in output results
+
 [4.15.0] - 2023-12-27
 ----------------------
 - [CHANGED] introduce the variable emission cost file
